@@ -4,6 +4,7 @@ import time
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTimer
 from emergence_ui import Ui_Dialog
+from emergence_magic import emerge_step
 import sys
 
 colors = ["white", "red", "blue", "green", "yellow", "purple", "orange", "cyan", "magenta"]
@@ -70,9 +71,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.gridLayout = 0
 
-    
-    def init(self):
-        self
+        #self.messageTimer = QTimer()
+        #self.messageTimer.timeout.connect(self.check_ui_updates)
+
 
     def fillBoxes(self, random=False):
         
@@ -101,6 +102,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             print("Not implemented yet")
             self.ui.grid_slider.setValue(0)
+
+    def step(self):
+        rows = int(self.ui.rowsNum_comboBox.currentText())
+        cols = int(self.ui.colsNum_comboBox.currentText())
+        numV = int(self.ui.varNum_comboBox.currentText())
+        
+        tmp = emerge_step(self.vals, rows, cols, numV)
+        self.vals = tmp
+        self.fillBoxes()
 
 
 

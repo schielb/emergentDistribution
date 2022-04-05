@@ -94,6 +94,7 @@ class Ui_Dialog(object):
         self.checkBox.setGeometry(QtCore.QRect(10, 10, 101, 23))
         self.checkBox.setObjectName("checkBox")
         self.frame = QtWidgets.QFrame(Dialog)
+        self.frame.setEnabled(False)
         self.frame.setGeometry(QtCore.QRect(40, 160, 411, 411))
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -296,15 +297,6 @@ class Ui_Dialog(object):
         font.setWeight(75)
         self.textEdit_7_1.setFont(font)
         self.textEdit_7_1.setObjectName("textEdit_7_1")
-        self.textEdit_8_9 = QtWidgets.QTextEdit(self.frame)
-        self.textEdit_8_9.setGeometry(QtCore.QRect(250, 290, 31, 31))
-        font = QtGui.QFont()
-        font.setFamily("Ubuntu Mono")
-        font.setPointSize(12)
-        font.setBold(True)
-        font.setWeight(75)
-        self.textEdit_8_9.setFont(font)
-        self.textEdit_8_9.setObjectName("textEdit_8_9")
         self.textEdit_3_9 = QtWidgets.QTextEdit(self.frame)
         self.textEdit_3_9.setGeometry(QtCore.QRect(330, 90, 31, 31))
         font = QtGui.QFont()
@@ -747,7 +739,7 @@ class Ui_Dialog(object):
         self.textEdit_4_4.setFont(font)
         self.textEdit_4_4.setObjectName("textEdit_4_4")
         self.textEdit_8_7 = QtWidgets.QTextEdit(self.frame)
-        self.textEdit_8_7.setGeometry(QtCore.QRect(330, 290, 31, 31))
+        self.textEdit_8_7.setGeometry(QtCore.QRect(250, 290, 31, 31))
         font = QtGui.QFont()
         font.setFamily("Ubuntu Mono")
         font.setPointSize(12)
@@ -998,6 +990,15 @@ class Ui_Dialog(object):
         font.setWeight(75)
         self.textEdit_1_8.setFont(font)
         self.textEdit_1_8.setObjectName("textEdit_1_8")
+        self.textEdit_8_9 = QtWidgets.QTextEdit(self.frame)
+        self.textEdit_8_9.setGeometry(QtCore.QRect(330, 290, 31, 31))
+        font = QtGui.QFont()
+        font.setFamily("Ubuntu Mono")
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.textEdit_8_9.setFont(font)
+        self.textEdit_8_9.setObjectName("textEdit_8_9")
         self.random_pushButton = QtWidgets.QPushButton(Dialog)
         self.random_pushButton.setGeometry(QtCore.QRect(40, 130, 161, 25))
         self.random_pushButton.setObjectName("random_pushButton")
@@ -1146,11 +1147,6 @@ class Ui_Dialog(object):
 "</style></head><body style=\" font-family:\'Ubuntu Mono\'; font-size:12pt; font-weight:600; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.textEdit_7_1.setHtml(_translate("Dialog", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu Mono\'; font-size:12pt; font-weight:600; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
-        self.textEdit_8_9.setHtml(_translate("Dialog", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Ubuntu Mono\'; font-size:12pt; font-weight:600; font-style:normal;\">\n"
@@ -1536,6 +1532,11 @@ class Ui_Dialog(object):
 "</style></head><body style=\" font-family:\'Ubuntu Mono\'; font-size:12pt; font-weight:600; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.textEdit_1_8.setHtml(_translate("Dialog", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Ubuntu Mono\'; font-size:12pt; font-weight:600; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
+        self.textEdit_8_9.setHtml(_translate("Dialog", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Ubuntu Mono\'; font-size:12pt; font-weight:600; font-style:normal;\">\n"
