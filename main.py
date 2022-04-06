@@ -31,6 +31,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         #random.seed(time.time())
         random.seed(0xBEEFCAFE)
 
+        # I GET THAT THIS IS INEFFICIENT, BUT IT NEEDS TO STAY THIS WAY!!!
+        # I tried "vals = [[WHITE]*10]*10", and then suddenly I would only get columns on the grid - not great!
         self.vals = [
             [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
             [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
@@ -121,6 +123,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         if random:
             self.history.clear()
             self.history.push(self.vals)
+            self.step_updateButtons()
 
     def randomizeBoxes(self):
         self.fillBoxes(random=True)
@@ -128,11 +131,29 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     # TODO: finish this
     ### Grid stuff
     def changeGrid(self):
-        if self.gridLayout == self.ui.grid_slider.value():
-            return
+        # Start by getting the general geometry of the boxes
+        leftEdge = self.boxes[0][0].geometry().getCoords()[0]
+        separation = self.boxes[0][1].geometry().getCoords()[0] - leftEdge
+
+        if not self.ui.grid_slider.value():
+            # Here we want to transition to hexagonal
+            self.ui.plot_frame.setGeometry(40, 160, 431, 411)
+            init_pos = int(leftEdge + (separation / 2))
         else:
-            print("Not implemented yet")
-            self.ui.grid_slider.setValue(0)
+            # This would be square grid
+            self.ui.plot_frame.setGeometry(40, 160, 411, 411)
+            init_pos = int(leftEdge)
+            
+        # Shift each other row right/left by ~ fifteen pixels
+        for i in range(1,10,2):
+            pos = init_pos
+            for j in range(10):
+                cur = self.boxes[i][j].geometry().getRect()
+                self.boxes[i][j].setGeometry(pos, cur[1], cur[2], cur[3])
+                pos += separation
+
+        self.randomizeBoxes()
+        
     ###############################################################
 
     ### MAGIC ###
@@ -141,8 +162,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         rows = int(self.ui.rowsNum_comboBox.currentText())
         cols = int(self.ui.colsNum_comboBox.currentText())
         numV = int(self.ui.varNum_comboBox.currentText())
+        grid = int(self.ui.grid_slider.value())
         
-        tmp = emerge_step(self.vals, rows, cols, numV)
+        tmp = emerge_step(self.vals, rows, cols, numV, grid)
         self.vals = copy.deepcopy(tmp)
         self.history.push(self.vals)
         self.fillBoxes()
@@ -153,41 +175,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     # In all of these I either generate new data or review old data;
     #  this then gets displayed, and I update the buttons accordingly
     ### Manual steps
+    def step_updateButtons(self):
+        canMove = self.history.canStillMove()
+        self.ui.prev_pushButton.setEnabled(canMove[0])
+        self.ui.next_pushButton.setEnabled(canMove[1])
+        self.ui.step_pushButton.setEnabled(not canMove[1])
+        self.ui.return_pushButton.setEnabled(canMove[1])
+
     def step_step(self):
         self.step_emerge()
-        canMove = self.history.canStillMove()
-        self.ui.prev_pushButton.setEnabled(canMove[0])
-        self.ui.next_pushButton.setEnabled(canMove[1])
-        self.ui.step_pushButton.setEnabled(not canMove[1])
-        self.ui.return_pushButton.setEnabled(False)
-    
-    def step_forward(self):
-        self.vals = copy.deepcopy(self.history.getNext())
-        self.fillBoxes()
+        self.step_updateButtons()
 
-        canMove = self.history.canStillMove()
-        self.ui.prev_pushButton.setEnabled(canMove[0])
-        self.ui.next_pushButton.setEnabled(canMove[1])
-        self.ui.step_pushButton.setEnabled(not canMove[1])
-        self.ui.return_pushButton.setEnabled(canMove[1])
+    def step_alt(self, fn):
+        self.vals = copy.deepcopy(fn())
+        self.fillBoxes()
+        self.step_updateButtons()
+
+    def step_forward(self):
+        self.step_alt(self.history.getNext)
 
     def step_backward(self):
-        self.vals = copy.deepcopy(self.history.getPrev())
-        self.fillBoxes()
-
-        canMove = self.history.canStillMove()
-        self.ui.prev_pushButton.setEnabled(canMove[0])
-        self.ui.next_pushButton.setEnabled(canMove[1])
-        self.ui.step_pushButton.setEnabled(False)
-        self.ui.return_pushButton.setEnabled(canMove[1])
+        self.step_alt(self.history.getPrev)
 
     def step_return(self):
-        self.vals = copy.deepcopy(self.history.getReturn())
-        self.fillBoxes()
-        self.ui.next_pushButton.setEnabled(False)
-        self.ui.prev_pushButton.setEnabled(False)
-        self.ui.step_pushButton.setEnabled(True)
-        self.ui.return_pushButton.setEnabled(False)
+        self.step_alt(self.history.getReturn)
         
 
     ### Auto step

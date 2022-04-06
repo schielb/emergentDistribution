@@ -1,0 +1,15 @@
+As of 4/6/22:
+  I know that I eventually need to make this optimizable, but first I will have to make it measurable... so the next step will be to add an emergence_eval.py file
+    With this, I need to determine what attributes I am looking for and what gets defined as "good emergent behavior"
+  Once I can practice with making it measurable, I will need to create an optimizer, so I'll be playing around with that.
+  
+  Another feature that I would love to implement is that it can handle a mask, so I can play with different shapes besides just rectangles
+  On top of this, there might be a scenario where, if a sensor can't detect anything around it, then it should plan to transmit in some form of revolving pattern, otherwise 'random' might make it miss a variable
+  
+  Something that I think I can make my next step, however, could be a hexagonal grid...
+    For one, it will be better if I can implement this now
+
+  ~~~ Later in the day ~~~
+  Okay, I added the ability to do a hexagonal grid. 
+  I shared this all with Phil, and what he recommended is that I look into other papers and see if anyone else has done this type of work
+    Regardless, he was very impressed with what I had gotten done so far!

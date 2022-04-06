@@ -46,9 +46,28 @@ def getSurrounding(r, c, rows, cols, grid = 1):
             surrounding.append([r, c-1])
         if c < cols-1:
             surrounding.append([r, c+1])
-    
+
+    # Hexagonal, gets a little trickier
     else:
-        pass
+        if r > 0:
+            surrounding.append([r-1, c])
+            if r % 2:
+                if c < cols-1: surrounding.append([r-1, c+1])
+            else:
+                if c > 0: surrounding.append([r-1, c-1])
+        if r < rows-1:
+            surrounding.append([r+1, c])
+            if r % 2:
+                if c < cols-1: surrounding.append([r+1, c+1])
+            else:
+                if c > 0: surrounding.append([r+1, c-1])
+
+        # We always get the ones on the sides        
+        if c > 0:
+            surrounding.append([r, c-1])
+        if c < cols-1:
+            surrounding.append([r, c+1])
+
 
     return surrounding
 
