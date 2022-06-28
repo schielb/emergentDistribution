@@ -23,6 +23,8 @@ import copy
 from random import randint
 import numpy as np
 
+INIT_BLACK = 8
+
 #Major variables
 INITIAL_VAL: float = 1.0    # The array of all potential next values is initialized to _this_ value
 DECREMENT_VAL: float = 1.0  # For each surrounding sensor that transmits a specific var, decrement that value _this_ much
@@ -79,6 +81,11 @@ def emerge_step(vals, rows, cols, varN, grid = 1):
     
     for r in range(rows):
         for c in range(cols):
+
+            # Skip value if initially black
+            if vals[r][c] == INIT_BLACK:
+                continue
+
             # Start by finding out the surrounding values
             surrounding = getSurrounding(r, c, rows, cols, grid)
             # And preparing an array to be normalized
@@ -87,7 +94,8 @@ def emerge_step(vals, rows, cols, varN, grid = 1):
             # At this point, we have the list of surrounding squares
             #  (including the square itself, for now)
             for s in surrounding:
-                next_vars[vals[s[0]][s[1]]] -= DECREMENT_VAL
+                if vals[s[0]][s[1]] != INIT_BLACK:
+                    next_vars[vals[s[0]][s[1]]] -= DECREMENT_VAL
 
             # We have now taken all values into account, we need to normalize
             # If all values are equal, do this explicitly to avoid dividng by 0
