@@ -1,6 +1,6 @@
 # This history class is useful for keeping a record of what was generated previously
 class History():
-    def __init__(self, length=30):
+    def __init__(self, length=15):
         self.history_length = length
         
         self.vals_history = [[[0]*10]*10]*self.history_length
