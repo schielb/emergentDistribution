@@ -1,20 +1,23 @@
 import copy
-from random import randint
-from PyQt5 import QtWidgets
+from datetime import datetime
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QTimer
 from emergence_ui import Ui_Dialog
 from emergence_magic import emerge_step
 from emergence_history import History
-import sys
+from functools import partial
 import random
-import time
+from random import randint
+import sys
+from time import gmtime, strftime
 
-ADVANCE_INTERVAL_MS = 500
-INIT_WHITE = 8
-INIT_BLACK = 9
+colors = ["red", "blue", "green", "yellow", "purple", "orange", "cyan", "magenta", "black"]
+INIT_BLACK = 8
 
+BUTTON_INDEX = ROW_INDEX = 0
+COLOR_INDEX = COL_INDEX = 1
 
-colors = ["red", "blue", "green", "yellow", "purple", "orange", "cyan", "magenta", "white", "black"]
+ADVANCE_INTERVAL_MS = 1000
 
 
 # This is the main class of the application where all functions relative to the buttons go
@@ -31,61 +34,24 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         #random.seed(time.time())
         random.seed(0xBEEFCAFE)
 
-        # I GET THAT THIS IS INEFFICIENT, BUT IT NEEDS TO STAY THIS WAY!!!
-        # I tried "vals = [[WHITE]*10]*10", and then suddenly I would only get columns on the grid - not great!
-        self.vals = [
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-            [INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE,INIT_WHITE],
-        ]
+        self.ui.rows_spinBox.valueChanged.connect(self.create_new_map)
+        self.ui.cols_spinBox.valueChanged.connect(self.create_new_map)
+        self.ui.varNum_comboBox.currentIndexChanged.connect(self.randomize_vars)
 
-        self.boxes = [
-            [self.ui.textEdit_1_1, self.ui.textEdit_1_2, self.ui.textEdit_1_3, self.ui.textEdit_1_4, 
-             self.ui.textEdit_1_5, self.ui.textEdit_1_6, self.ui.textEdit_1_7, self.ui.textEdit_1_8, 
-             self.ui.textEdit_1_9, self.ui.textEdit_1_10],
-            [self.ui.textEdit_2_1, self.ui.textEdit_2_2, self.ui.textEdit_2_3, self.ui.textEdit_2_4, 
-             self.ui.textEdit_2_5, self.ui.textEdit_2_6, self.ui.textEdit_2_7, self.ui.textEdit_2_8, 
-             self.ui.textEdit_2_9, self.ui.textEdit_2_10],
-            [self.ui.textEdit_3_1, self.ui.textEdit_3_2, self.ui.textEdit_3_3, self.ui.textEdit_3_4, 
-             self.ui.textEdit_3_5, self.ui.textEdit_3_6, self.ui.textEdit_3_7, self.ui.textEdit_3_8, 
-             self.ui.textEdit_3_9, self.ui.textEdit_3_10],
-            [self.ui.textEdit_4_1, self.ui.textEdit_4_2, self.ui.textEdit_4_3, self.ui.textEdit_4_4, 
-             self.ui.textEdit_4_5, self.ui.textEdit_4_6, self.ui.textEdit_4_7, self.ui.textEdit_4_8, 
-             self.ui.textEdit_4_9, self.ui.textEdit_4_10],
-            [self.ui.textEdit_5_1, self.ui.textEdit_5_2, self.ui.textEdit_5_3, self.ui.textEdit_5_4, 
-             self.ui.textEdit_5_5, self.ui.textEdit_5_6, self.ui.textEdit_5_7, self.ui.textEdit_5_8, 
-             self.ui.textEdit_5_9, self.ui.textEdit_5_10],
-            [self.ui.textEdit_6_1, self.ui.textEdit_6_2, self.ui.textEdit_6_3, self.ui.textEdit_6_4, 
-             self.ui.textEdit_6_5, self.ui.textEdit_6_6, self.ui.textEdit_6_7, self.ui.textEdit_6_8, 
-             self.ui.textEdit_6_9, self.ui.textEdit_6_10],
-            [self.ui.textEdit_7_1, self.ui.textEdit_7_2, self.ui.textEdit_7_3, self.ui.textEdit_7_4, 
-             self.ui.textEdit_7_5, self.ui.textEdit_7_6, self.ui.textEdit_7_7, self.ui.textEdit_7_8, 
-             self.ui.textEdit_7_9, self.ui.textEdit_7_10],
-            [self.ui.textEdit_8_1, self.ui.textEdit_8_2, self.ui.textEdit_8_3, self.ui.textEdit_8_4, 
-             self.ui.textEdit_8_5, self.ui.textEdit_8_6, self.ui.textEdit_8_7, self.ui.textEdit_8_8, 
-             self.ui.textEdit_8_9, self.ui.textEdit_8_10],
-            [self.ui.textEdit_9_1, self.ui.textEdit_9_2, self.ui.textEdit_9_3, self.ui.textEdit_9_4, 
-             self.ui.textEdit_9_5, self.ui.textEdit_9_6, self.ui.textEdit_9_7, self.ui.textEdit_9_8, 
-             self.ui.textEdit_9_9, self.ui.textEdit_9_10],
-            [self.ui.textEdit_10_1, self.ui.textEdit_10_2, self.ui.textEdit_10_3, self.ui.textEdit_10_4, 
-             self.ui.textEdit_10_5, self.ui.textEdit_10_6, self.ui.textEdit_10_7, self.ui.textEdit_10_8, 
-             self.ui.textEdit_10_9, self.ui.textEdit_10_10]
-        ]
+        self.boxes : dict = {}
+        self.vals = []
+        '''
+        The self.boxes dictionary is formatted like so:
+            key     -> tuple(row, column)
+            value   -> list(button, color index)
+        
+        The self.vals list is a 2d array that contains the color indices
+        '''
 
-        self.ui.colsNum_comboBox.currentIndexChanged.connect(self.randomizeBoxes)
-        self.ui.rowsNum_comboBox.currentIndexChanged.connect(self.randomizeBoxes)
-        self.ui.varNum_comboBox.currentIndexChanged.connect(self.randomizeBoxes)
-        self.ui.random_pushButton.clicked.connect(self.randomizeBoxes)
+        
+
+        self.ui.randomVars_pushButton.clicked.connect(self.randomize_vars)
         self.ui.grid_slider.valueChanged.connect(self.changeGrid)
-
-        self.gridLayout = 0
 
         self.advanceTimer = QTimer()
         self.advanceTimer.setInterval(ADVANCE_INTERVAL_MS)
@@ -97,77 +63,150 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.prev_pushButton.clicked.connect(self.step_backward)
         self.ui.return_pushButton.clicked.connect(self.step_return)
 
-        self.randomizeBoxes()
+
+        self.fillBoxes(random_vars=True, new_map=True)
 
 
-    ### GRID FUNCTIONS
-    ###############################################################
-    ### Fill stuff
-    def fillBoxes(self, random=False):
+    def clear_map(self):
+        for key in self.boxes:
+            self.boxes[key][BUTTON_INDEX].deleteLater()
+        self.boxes.clear()
         
-        rows = int(self.ui.rowsNum_comboBox.currentText())
-        cols = int(self.ui.colsNum_comboBox.currentText())
+    ### Fill stuff
+    def fillBoxes(self, random_vars=False, new_map=False, new_vals=False):
+        
+        rows = int(self.ui.rows_spinBox.value())
+        cols = int(self.ui.cols_spinBox.value())
         numV = int(self.ui.varNum_comboBox.currentText())
 
-        for r in range(10):
-            for c in range(10):
-                if r < rows and c < cols:
-                    if random:
-                        self.vals[r][c] = randint(0, numV-1)
-                        
-                    color = colors[self.vals[r][c]]
-                else:
-                    color = colors[INIT_BLACK]
-                self.boxes[r][c].setStyleSheet("background: " + color)
+        
 
-        if random:
+        if new_map:
+            fWidth, fHeight = 1000, 600 #self.ui.map_frame.geometry().height(), self.ui.map_frame.geometry().width()
+            bWidth, bHeight = int(fWidth / cols), int(fHeight / rows)
+
+            self.clear_map()
+            self.vals.clear()
+            bX, bY = 10, 10
+            for r in range(rows):
+                self.vals.append([])
+                for c in range(cols):
+                    # Create a new button and place it in the frame
+                    button = QtWidgets.QPushButton(self.ui.map_frame)
+                    button.setGeometry(QtCore.QRect(bX, bY, bWidth - 2, bHeight - 2))
+                    name = "button_%d_%d" % (r, c)
+                    button.setObjectName(name)
+
+                    # Create its dictionary values for self.boxes;
+                    #  Should be [row, col]: [button, color]
+                    key_tuple = (r,c)
+                    color_int = randint(0, numV-1)
+                    color = colors[color_int]
+                    self.vals[r].append(color_int)
+                    button_tuple = [button, color]
+                    
+                    # Add new key and value to dict; add button click action
+                    self.boxes[key_tuple] = button_tuple 
+                    button.clicked.connect(partial(self.click_q, key_tuple)) 
+
+                    bX += bWidth
+                bY += bHeight  
+                bX = 10    
+
+        if random_vars:
+            for key in self.boxes:
+                color_int = randint(0, numV-1)
+                self.boxes[key][COLOR_INDEX] = color_int
+                self.vals[key[ROW_INDEX]][key[COL_INDEX]] = color_int
+
+        if new_vals:
+            for i in range(len(self.vals)):
+                for j in range(len(self.vals[i])):
+                    key = (i, j)
+                    self.boxes[key][COLOR_INDEX] = self.vals[i][j]
+
+        for key in self.boxes:
+            color_int = self.boxes[key][1]
+            color = colors[color_int]
+            self.boxes[key][BUTTON_INDEX].setStyleSheet("background: " + color)             
+                    
+                    
+                    
+
+        if random_vars or new_map:
             self.history.clear()
             self.history.push(self.vals)
             self.step_updateButtons()
 
-    def randomizeBoxes(self):
-        self.fillBoxes(random=True)
-
-    # TODO: finish this
     ### Grid stuff
     def changeGrid(self):
         # Start by getting the general geometry of the boxes
-        leftEdge = self.boxes[0][0].geometry().getCoords()[0]
-        separation = self.boxes[0][1].geometry().getCoords()[0] - leftEdge
+        # TODO THESE ARE MAGIC NUMBERS! FIX WHEN YOU CAN CHANGE MAP DIMENSIONS!
+        leftEdge = 10
+        separation = 10
 
         if not self.ui.grid_slider.value():
             # Here we want to transition to hexagonal
-            self.ui.plot_frame.setGeometry(40, 160, 431, 411)
             init_pos = int(leftEdge + (separation / 2))
         else:
             # This would be square grid
-            self.ui.plot_frame.setGeometry(40, 160, 411, 411)
             init_pos = int(leftEdge)
             
-        # Shift each other row right/left by ~ fifteen pixels
-        for i in range(1,10,2):
+        # Shift each other row right/left by ~five pixels
+        rows = int(self.ui.rows_spinBox.value())
+        cols = int(self.ui.cols_spinBox.value())
+        for i in range(1,rows,2):
+            pos = init_pos
+            for j in range(cols):
+                key = (i, j)
+                cur = self.boxes[key][BUTTON_INDEX].geometry().getRect()
+                self.boxes[key][BUTTON_INDEX].setGeometry(pos, cur[1], cur[2], cur[3])
+                pos += separation
+
+
+        '''for i in range(1,rows,2):
             pos = init_pos
             for j in range(10):
                 cur = self.boxes[i][j].geometry().getRect()
                 self.boxes[i][j].setGeometry(pos, cur[1], cur[2], cur[3])
-                pos += separation
+                pos += separation'''
 
-        self.randomizeBoxes()
+        self.randomize_vars()
+
+    def randomize_vars(self):
+        self.fillBoxes(random_vars=True) 
+
+    def create_new_map(self):
+        self.fillBoxes(new_map=True)
+    
+    def click_q(self, num):
+        numV = int(self.ui.varNum_comboBox.currentText())
+        color_int = self.boxes[num][COLOR_INDEX]
+
+        color_int = randint(0, numV-1) \
+            if (color_int == INIT_BLACK) \
+            else INIT_BLACK
+
+        color = colors[color_int]
+
+        self.boxes[num][BUTTON_INDEX].setStyleSheet("background: " + color)
+        self.boxes[num][COLOR_INDEX] = color_int
+        self.vals[num[ROW_INDEX]][num[COL_INDEX]] = color_int
+
         
-    ###############################################################
-
     ### MAGIC ###
     ###############################################################
     def step_emerge(self):
-        rows = int(self.ui.rowsNum_comboBox.currentText())
-        cols = int(self.ui.colsNum_comboBox.currentText())
+        rows = int(self.ui.rows_spinBox.value())
+        cols = int(self.ui.cols_spinBox.value())
         numV = int(self.ui.varNum_comboBox.currentText())
         grid = int(self.ui.grid_slider.value())
         
         tmp = emerge_step(self.vals, rows, cols, numV, grid)
         self.vals = copy.deepcopy(tmp)
         self.history.push(self.vals)
-        self.fillBoxes()
+        self.fillBoxes(new_vals=True)
+
     ###############################################################
 
     ### STEP FUNCTIONS ###
@@ -188,7 +227,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def step_alt(self, fn):
         self.vals = copy.deepcopy(fn())
-        self.fillBoxes()
+        self.fillBoxes(new_vals=True)
         self.step_updateButtons()
 
     def step_forward(self):
@@ -217,8 +256,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.ui.next_pushButton.setEnabled(False)
             self.ui.step_pushButton.setEnabled(True)
     ###############################################################
-
-
 
 
 
