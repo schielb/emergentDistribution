@@ -4,15 +4,26 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QTimer
 from emergence_ui_test import Ui_Dialog
 from emergence_magic import emerge_step
+from assign_loop_magic import assign_loop_step
+from rand_loop_magic import rand_loop_step
+from random_magic import random_step
 from emergence_history import History
 from functools import partial
 import random
 from random import randint
 import sys
-from time import gmtime, strftime
 
 colors = ["red", "blue", "green", "yellow", "purple", "orange", "cyan", "magenta", "black"]
 INIT_BLACK = 8
+
+EMERGENCE_INDEX = 3
+ASSIGN_LOOP_INDEX = 2
+RAND_LOOP_INDEX = 1
+RANDOM_INDEX = 0
+solution_steps = {
+    RANDOM_INDEX: random_step, RAND_LOOP_INDEX: rand_loop_step,
+    ASSIGN_LOOP_INDEX: assign_loop_step, EMERGENCE_INDEX: emerge_step
+}
 
 BUTTON_INDEX = ROW_INDEX = 0
 COLOR_INDEX = COL_INDEX = 1
@@ -37,6 +48,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.rows_spinBox.valueChanged.connect(self.create_new_map)
         self.ui.cols_spinBox.valueChanged.connect(self.create_new_map)
         self.ui.varNum_comboBox.currentIndexChanged.connect(self.randomize_vars)
+        self.ui.solution_comboBox.currentIndexChanged.connect(self.change_solution)
+        self.ui.randomOnOff_pushButton.clicked.connect(self.randomize_on_off)
+
+        self.onOff = True
 
         self.boxes : dict = {}
         self.vals = []
@@ -174,10 +189,64 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.randomize_vars()
 
     def randomize_vars(self):
-        self.fillBoxes(random_vars=True) 
+        if self.ui.solution_comboBox.currentIndex() == ASSIGN_LOOP_INDEX:
+            numV = int(self.ui.varNum_comboBox.currentText())
+            color_int = 0
+            for key in self.boxes:
+                if self.boxes[key][COLOR_INDEX] != INIT_BLACK:
+                    color = colors[color_int]
+                    self.boxes[key][BUTTON_INDEX].setStyleSheet("background: " + color)
+                    self.boxes[key][COLOR_INDEX] = color_int
+                    self.vals[key[ROW_INDEX]][key[COL_INDEX]] = color_int
+
+                    color_int = (color_int + 1) % numV
+
+        else:
+            self.fillBoxes(random_vars=True) 
 
     def create_new_map(self):
         self.fillBoxes(new_map=True)
+
+    def randomize_on_off(self):
+        if self.onOff:
+            self.ui.randomOnOff_pushButton.setText('Turn All On')
+            numV = int(self.ui.varNum_comboBox.currentText())
+            for key in self.boxes:
+                # Chance is proiportional to number of vars
+                color_int = INIT_BLACK \
+                    if randint(0, numV) == 0  \
+                    else randint(0, numV-1)
+
+                color = colors[color_int]
+                self.boxes[key][BUTTON_INDEX].setStyleSheet("background: " + color)
+                self.boxes[key][COLOR_INDEX] = color_int
+                self.vals[key[ROW_INDEX]][key[COL_INDEX]] = color_int
+            # Call this in case we need to keep some sort of order; lost work earlier, but we'll survive
+            if self.ui.solution_comboBox.currentIndex() == ASSIGN_LOOP_INDEX:
+                self.randomize_vars()
+                self.onOff = False
+                return
+                
+        else:
+            self.ui.randomOnOff_pushButton.setText('Randomize On/Off')
+            for key in self.boxes:
+                color_int = 0
+                color = colors[color_int]
+                self.boxes[key][BUTTON_INDEX].setStyleSheet("background: " + color)
+                self.boxes[key][COLOR_INDEX] = color_int
+                self.vals[key[ROW_INDEX]][key[COL_INDEX]] = color_int
+            self.randomize_vars()
+            self.onOff = True
+            return
+            
+        self.onOff = not self.onOff
+        self.fillBoxes()
+
+    def change_solution(self):
+        if self.ui.solution_comboBox.currentIndex() == ASSIGN_LOOP_INDEX:
+            self.ui.randomVars_pushButton.setText('Initialize Vars')
+        self.randomize_vars()
+            
     
     def click_q(self, num):
         numV = int(self.ui.varNum_comboBox.currentText())
@@ -196,13 +265,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         
     ### MAGIC ###
     ###############################################################
-    def step_emerge(self):
+    def step_generate(self):
         rows = int(self.ui.rows_spinBox.value())
         cols = int(self.ui.cols_spinBox.value())
         numV = int(self.ui.varNum_comboBox.currentText())
         grid = int(self.ui.grid_slider.value())
+
+        step_index = self.ui.solution_comboBox.currentIndex()
+        step = solution_steps[step_index]
         
-        tmp = emerge_step(self.vals, rows, cols, numV, grid)
+        tmp = step(self.vals, rows, cols, numV, grid)
         self.vals = copy.deepcopy(tmp)
         self.history.push(self.vals)
         self.fillBoxes(new_vals=True)
@@ -222,7 +294,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.return_pushButton.setEnabled(canMove[1])
 
     def step_step(self):
-        self.step_emerge()
+        self.step_generate()
         self.step_updateButtons()
 
     def step_alt(self, fn):
@@ -242,7 +314,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     ### Auto step
     def autoStep(self):
-        self.step_emerge()
+        self.step_generate()
 
     def toggleAutoStep(self):
         if self.ui.checkBox.isChecked():
