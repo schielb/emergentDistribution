@@ -2,7 +2,7 @@ import copy
 from datetime import datetime
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QTimer
-from emergence_ui import Ui_Dialog
+from emergence_ui_test import Ui_Dialog
 from emergence_magic import emerge_step
 from emergence_history import History
 from functools import partial
