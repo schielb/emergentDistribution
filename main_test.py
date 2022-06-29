@@ -255,7 +255,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def change_solution(self):
         if self.ui.solution_comboBox.currentIndex() == ASSIGN_LOOP_INDEX:
             self.ui.randomVars_pushButton.setText('Initialize Vars')
-        self.randomize_vars()
+        else:
+            self.ui.randomVars_pushButton.setText('Randomize Vars')
+        
+        if not self.onOff:
+            self.toggle_on_off() # Runs the process of creating the map already
+        else:
+            self.randomize_vars()
             
     
     def click_q(self, num):
