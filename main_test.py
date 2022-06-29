@@ -1,14 +1,16 @@
 import copy
 from datetime import datetime
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QTimer
 from emergence_ui_test import Ui_Dialog
-from emergence_magic import emerge_step
+from emergence_magic import emerge_step, getSurrounding
 from assign_loop_magic import assign_loop_step
 from rand_loop_magic import rand_loop_step
 from random_magic import random_step
 from emergence_history import History
 from functools import partial
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 import random
 from random import randint
 import sys
@@ -25,8 +27,8 @@ solution_steps = {
     ASSIGN_LOOP_INDEX: assign_loop_step, EMERGENCE_INDEX: emerge_step
 }
 
-BUTTON_INDEX = ROW_INDEX = 0
-COLOR_INDEX = COL_INDEX = 1
+BUTTON_INDEX = ROW_INDEX = HIST_INDEX = 0
+COLOR_INDEX  = COL_INDEX = LABL_INDEX = 1
 
 ADVANCE_INTERVAL_MS = 1000
 
@@ -45,9 +47,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         #random.seed(time.time())
         random.seed(0xBEEFCAFE)
 
+        self.numV = 2
+
         self.ui.rows_spinBox.valueChanged.connect(self.create_new_map)
         self.ui.cols_spinBox.valueChanged.connect(self.create_new_map)
-        self.ui.varNum_comboBox.currentIndexChanged.connect(self.randomize_vars)
+        self.ui.varNum_comboBox.currentIndexChanged.connect(self.change_num_vars)
         self.ui.solution_comboBox.currentIndexChanged.connect(self.change_solution)
         self.ui.randomOnOff_pushButton.clicked.connect(self.toggle_on_off)
         self.ui.percentOff_spinBox.valueChanged.connect(self.randomize_on_off)
@@ -63,8 +67,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         
         The self.vals list is a 2d array that contains the color indices
         '''
-
+        self.histogram_total = {
+            0: (self.ui.var1_progressBar, self.ui.varBar1_label),
+            1: (self.ui.var2_progressBar, self.ui.varBar2_label),
+            2: (self.ui.var3_progressBar, self.ui.varBar3_label),
+            3: (self.ui.var4_progressBar, self.ui.varBar4_label),
+            4: (self.ui.var5_progressBar, self.ui.varBar5_label),
+            5: (self.ui.var6_progressBar, self.ui.varBar6_label),
+            6: (self.ui.var7_progressBar, self.ui.varBar7_label),
+            7: (self.ui.var8_progressBar, self.ui.varBar8_label)
+        }
         
+
+        self.histogram_collisions = {
+            0: (self.ui.collisions1_progressBar, self.ui.collisionsBar1_label),
+            1: (self.ui.collisions2_progressBar, self.ui.collisionsBar2_label),
+            2: (self.ui.collisions3_progressBar, self.ui.collisionsBar3_label),
+            3: (self.ui.collisions4_progressBar, self.ui.collisionsBar4_label),
+            4: (self.ui.collisions5_progressBar, self.ui.collisionsBar5_label),
+            5: (self.ui.collisions6_progressBar, self.ui.collisionsBar6_label),
+            6: (self.ui.collisions7_progressBar, self.ui.collisionsBar7_label),
+            7: (self.ui.collisions8_progressBar, self.ui.collisionsBar8_label)
+        }
+        self.init_histograms()
+        self.analysis_tools_update()
 
         self.ui.randomVars_pushButton.clicked.connect(self.randomize_vars)
         self.ui.grid_slider.valueChanged.connect(self.changeGrid)
@@ -93,9 +119,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         
         rows = int(self.ui.rows_spinBox.value())
         cols = int(self.ui.cols_spinBox.value())
-        numV = int(self.ui.varNum_comboBox.currentText())
-
-        
 
         if new_map:
             fWidth, fHeight = 1000, 600 #self.ui.map_frame.geometry().height(), self.ui.map_frame.geometry().width()
@@ -116,7 +139,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                     # Create its dictionary values for self.boxes;
                     #  Should be [row, col]: [button, color]
                     key_tuple = (r,c)
-                    color_int = randint(0, numV-1)
+                    color_int = randint(0, self.numV-1)
                     color = colors[color_int]
                     self.vals[r].append(color_int)
                     button_tuple = [button, color]
@@ -131,7 +154,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         if random_vars:
             for key in self.boxes:
-                color_int = randint(0, numV-1)
+                color_int = randint(0, self.numV-1)
                 self.boxes[key][COLOR_INDEX] = color_int
                 self.vals[key[ROW_INDEX]][key[COL_INDEX]] = color_int
 
@@ -144,17 +167,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         for key in self.boxes:
             color_int = self.boxes[key][1]
             color = colors[color_int]
-            self.boxes[key][BUTTON_INDEX].setStyleSheet("background: " + color)             
-                    
-                    
-                    
+            self.boxes[key][BUTTON_INDEX].setStyleSheet("background: " + color)  
+
+        self.run_alaysis()                 
 
         if random_vars or new_map:
             self.history.clear()
             self.history.push(self.vals)
             self.step_updateButtons()
 
-    ### Grid stuff
+    ### Grid stuff - square or hexagonal
     def changeGrid(self):
         # Start by getting the general geometry of the boxes
         # TODO THESE ARE MAGIC NUMBERS! FIX WHEN YOU CAN CHANGE MAP DIMENSIONS!
@@ -193,7 +215,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def randomize_vars(self):
         if self.ui.solution_comboBox.currentIndex() == ASSIGN_LOOP_INDEX:
-            numV = int(self.ui.varNum_comboBox.currentText())
+            
             color_int = 0
             for key in self.boxes:
                 if self.boxes[key][COLOR_INDEX] != INIT_BLACK:
@@ -202,7 +224,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                     self.boxes[key][COLOR_INDEX] = color_int
                     self.vals[key[ROW_INDEX]][key[COL_INDEX]] = color_int
 
-                    color_int = (color_int + 1) % numV
+                    color_int = (color_int + 1) % self.numV
 
         else:
             self.fillBoxes(random_vars=True) 
@@ -221,15 +243,19 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.onOff = not self.onOff
         self.randomize_on_off()
         
+    def change_num_vars(self):
+        self.numV = int(self.ui.varNum_comboBox.currentText())
+        self.randomize_vars()
+        self.analysis_tools_update()
 
     def randomize_on_off(self):
         if not self.onOff:
-            numV = int(self.ui.varNum_comboBox.currentText())
+            
             for key in self.boxes:
-                # Chance is proiportional to number of vars
+                # Chance is proportional to number of vars
                 color_int = INIT_BLACK \
                     if randint(0, 10) <= (self.ui.percentOff_spinBox.value() / 10)  \
-                    else randint(0, numV-1)
+                    else randint(0, self.numV-1)
 
                 color = colors[color_int]
                 self.boxes[key][BUTTON_INDEX].setStyleSheet("background: " + color)
@@ -265,10 +291,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             
     
     def click_q(self, num):
-        numV = int(self.ui.varNum_comboBox.currentText())
         color_int = self.boxes[num][COLOR_INDEX]
 
-        color_int = randint(0, numV-1) \
+        color_int = randint(0, self.numV-1) \
             if (color_int == INIT_BLACK) \
             else INIT_BLACK
 
@@ -284,13 +309,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def step_generate(self):
         rows = int(self.ui.rows_spinBox.value())
         cols = int(self.ui.cols_spinBox.value())
-        numV = int(self.ui.varNum_comboBox.currentText())
         grid = int(self.ui.grid_slider.value())
 
         step_index = self.ui.solution_comboBox.currentIndex()
         step = solution_steps[step_index]
         
-        tmp = step(self.vals, rows, cols, numV, grid)
+        tmp = step(self.vals, rows, cols, self.numV, grid)
         self.vals = copy.deepcopy(tmp)
         self.history.push(self.vals)
         self.fillBoxes(new_vals=True)
@@ -343,6 +367,101 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.ui.prev_pushButton.setEnabled(True)
             self.ui.next_pushButton.setEnabled(False)
             self.ui.step_pushButton.setEnabled(True)
+    ###############################################################
+
+    ### ANALYSIS FUNCTIONS ###
+    ###############################################################
+    # In all of these I am manipulating the widgets and math used for
+    #  analyzing how well-distributed everything is
+
+    def run_alaysis(self):
+        self.analyze_totals_histogram()
+        self.analyze_collisions_histogram()
+
+    def analysis_tools_update(self):
+        # Start with totals histogram
+        for i in range(8):
+            self.histogram_total[i][HIST_INDEX].setEnabled(i < self.numV)
+            self.histogram_collisions[i][HIST_INDEX].setEnabled(i < self.numV)
+            if i >= self.numV:
+                self.histogram_total[i][HIST_INDEX].setValue(0)
+                self.histogram_total[i][LABL_INDEX].setText('--%')
+
+                self.histogram_collisions[i][HIST_INDEX].setValue(0)
+                self.histogram_collisions[i][LABL_INDEX].setText('--%')
+
+        total_line_goal = int(103 - (100 / self.numV))
+        self.ui.totalGoal_line.setGeometry(20, total_line_goal, 431, 16)
+        self.ui.totalGoal_label.setText("Goal: " + str(int(100 / self.numV)) + "%")
+
+    def init_histograms(self):
+        for i in range(8):
+            color = colors[i]
+            self.histogram_total[i][HIST_INDEX].setStyleSheet(
+                "QProgressBar::chunk {background-color: " + color + ";}"
+            )
+            self.histogram_collisions[i][HIST_INDEX].setStyleSheet(          
+                "QProgressBar::chunk {background-color: " + color + ";}"            
+            )
+
+
+    ## Totals histogram - update function
+    def analyze_totals_histogram(self):
+        each, total = self.analyze_totals()
+        for i in range(0, self.numV):
+            self.histogram_total[i][HIST_INDEX].setValue(int(each[i] / total * 100))
+            self.histogram_total[i][LABL_INDEX].setText(str(int(each[i] / total * 100)) + "%")
+
+    def analyze_collisions_histogram(self):
+        each, total = self.analyze_collisions()
+        for i in range(0, self.numV):
+            self.histogram_collisions[i][HIST_INDEX].setValue(int(each[i] / total[i] * 100))
+            self.histogram_collisions[i][LABL_INDEX].setText(str(int(each[i] / total[i] * 100)) + "%")
+
+    def analyze_collisions(self):
+        rows = int(self.ui.rows_spinBox.value())
+        cols = int(self.ui.cols_spinBox.value())
+        grid = int(self.ui.grid_slider.value())
+
+        each = [0 for i in range(8)]
+        total = [0 for i in range(8)]
+        
+        for key in self.boxes:
+            # Skip a sqaure if it's black
+            if self.boxes[key][COLOR_INDEX] == INIT_BLACK:
+                continue
+
+            r, c = key[ROW_INDEX], key[COL_INDEX]
+            surrounding = getSurrounding(r, c, rows, cols, grid)
+
+            del surrounding[0]
+
+            # We now have a list of neighboring boxes by coord tuples
+            for pair in surrounding:
+                # Add to the total number of neighbors
+                total[self.boxes[key][COLOR_INDEX]] += 1
+                if self.boxes[pair][COLOR_INDEX] == self.boxes[key][COLOR_INDEX]:
+                    each[self.boxes[key][COLOR_INDEX]] += 1
+
+            
+
+        return each, total
+
+    def analyze_totals(self):
+        each = [0 for i in range(8)]
+        total = 0
+
+        for key in self.boxes:
+            color_int = self.boxes[key][COLOR_INDEX]
+            if color_int == INIT_BLACK:
+                continue
+            else:
+                total += 1
+                each[color_int] += 1
+        
+        return each, total
+
+
     ###############################################################
 
 
