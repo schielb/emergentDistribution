@@ -49,7 +49,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.cols_spinBox.valueChanged.connect(self.create_new_map)
         self.ui.varNum_comboBox.currentIndexChanged.connect(self.randomize_vars)
         self.ui.solution_comboBox.currentIndexChanged.connect(self.change_solution)
-        self.ui.randomOnOff_pushButton.clicked.connect(self.randomize_on_off)
+        self.ui.randomOnOff_pushButton.clicked.connect(self.toggle_on_off)
+        self.ui.percentOff_spinBox.valueChanged.connect(self.randomize_on_off)
 
         self.onOff = True
 
@@ -188,6 +189,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.randomize_vars()
 
+    
+
     def randomize_vars(self):
         if self.ui.solution_comboBox.currentIndex() == ASSIGN_LOOP_INDEX:
             numV = int(self.ui.varNum_comboBox.currentText())
@@ -207,14 +210,25 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def create_new_map(self):
         self.fillBoxes(new_map=True)
 
-    def randomize_on_off(self):
+    def toggle_on_off(self):
         if self.onOff:
             self.ui.randomOnOff_pushButton.setText('Turn All On')
+            self.ui.percentOff_spinBox.setEnabled(True)
+        else:
+            self.ui.randomOnOff_pushButton.setText('Randomize On/Off') 
+            self.ui.percentOff_spinBox.setEnabled(False)
+
+        self.onOff = not self.onOff
+        self.randomize_on_off()
+        
+
+    def randomize_on_off(self):
+        if not self.onOff:
             numV = int(self.ui.varNum_comboBox.currentText())
             for key in self.boxes:
                 # Chance is proiportional to number of vars
                 color_int = INIT_BLACK \
-                    if randint(0, numV) == 0  \
+                    if randint(0, 10) <= (self.ui.percentOff_spinBox.value() / 10)  \
                     else randint(0, numV-1)
 
                 color = colors[color_int]
@@ -224,11 +238,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # Call this in case we need to keep some sort of order; lost work earlier, but we'll survive
             if self.ui.solution_comboBox.currentIndex() == ASSIGN_LOOP_INDEX:
                 self.randomize_vars()
-                self.onOff = False
                 return
                 
         else:
-            self.ui.randomOnOff_pushButton.setText('Randomize On/Off')
             for key in self.boxes:
                 color_int = 0
                 color = colors[color_int]
@@ -236,10 +248,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 self.boxes[key][COLOR_INDEX] = color_int
                 self.vals[key[ROW_INDEX]][key[COL_INDEX]] = color_int
             self.randomize_vars()
-            self.onOff = True
             return
             
-        self.onOff = not self.onOff
         self.fillBoxes()
 
     def change_solution(self):
