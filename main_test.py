@@ -234,7 +234,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         new_vals = copy.deepcopy(self.vals)
 
         # Start py putting the seed in
-        initial_percent = float(float(final_goal_percent / 10) / 100)
+        initial_percent = float(float(final_goal_percent / 10) / 100.0)
+        final_percent = float(float(final_goal_percent) / 100.0)
+
+        for key in self.boxes:
+            r, c = key[0], key[1]
 
 
 
