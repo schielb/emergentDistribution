@@ -9,8 +9,6 @@ from rand_loop_magic import rand_loop_step
 from random_magic import random_step
 from emergence_history import History
 from functools import partial
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 import random
 from random import randint
 import sys
