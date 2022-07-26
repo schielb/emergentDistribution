@@ -229,6 +229,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             self.fillBoxes(random_vars=True) 
 
+    def seed_clusters(self, final_goal_percent=50, num_rounds=10, empty=True):
+        # We want to ensure first off that we have a fully filled map
+        self.create_new_map()
+
+        new_vals = copy.deepcopy(self.vals)
+
+        # Start py putting the seed in
+        initial_percent = float(float(final_goal_percent / 10) / 100)
+
+
+
     def create_new_map(self):
         self.fillBoxes(new_map=True)
 
