@@ -2,7 +2,7 @@ import copy
 from datetime import datetime
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QTimer
-from emergence_ui_test import Ui_Dialog
+from distribution_ui import Ui_Dialog
 from emergence_magic import emerge_step, getSurrounding
 from assign_loop_magic import assign_loop_step
 from rand_loop_magic import rand_loop_step
@@ -227,7 +227,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             self.fillBoxes(random_vars=True) 
 
-    def seed_clusters(self, final_goal_percent=50, num_rounds=10, empty=True):
+    def seed_clusters(self, final_goal_percent=40, num_rounds=10, empty=True):
         # We want to ensure first off that we have a fully filled map
         self.create_new_map()
 
