@@ -103,6 +103,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.prev_pushButton.clicked.connect(self.step_backward)
         self.ui.return_pushButton.clicked.connect(self.step_return)
 
+        self.clustered = False
+        self.ui.clusterOnOff_pushButton.clicked.connect(self.toggle_cluster)
+        self.ui.clusterPercent_comboBox.currentIndexChanged.connect(self.seed_clusters)
+        self.ui.clusterType_comboBox.currentIndexChanged.connect(self.seed_clusters)
+
 
         self.fillBoxes(random_vars=True, new_map=True)
 
@@ -111,6 +116,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         for key in self.boxes:
             self.boxes[key][BUTTON_INDEX].deleteLater()
         self.boxes.clear()
+        self.vals.clear()
         
     ### Fill stuff
     def fillBoxes(self, random_vars=False, new_map=False, new_vals=False):
@@ -140,7 +146,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                     color_int = randint(0, self.numV-1)
                     color = colors[color_int]
                     self.vals[r].append(color_int)
-                    button_tuple = [button, color]
+                    button_tuple = [button, color_int]
                     
                     # Add new key and value to dict; add button click action
                     self.boxes[key_tuple] = button_tuple 
@@ -227,18 +233,86 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             self.fillBoxes(random_vars=True) 
 
-    def seed_clusters(self, final_goal_percent=40, num_rounds=10, empty=True):
-        # We want to ensure first off that we have a fully filled map
-        self.create_new_map()
+    def toggle_cluster(self):
+        self.clustered = not self.clustered
+        
+        if self.clustered:
+            self.ui.clusterOnOff_pushButton.setText('Disable Clustering')
+            self.ui.clusterType_comboBox.setEnabled(True)
+            self.ui.clusterPercent_comboBox.setEnabled(True)
+            self.seed_clusters()
+
+        else:
+            self.ui.clusterOnOff_pushButton.setText('Enable Clustering')
+            self.ui.clusterType_comboBox.setEnabled(False)
+            self.ui.clusterPercent_comboBox.setEnabled(False)
+            self.randomize_vars()
+
+    def seed_clusters(self):
+        # We want to ensure first off that we have a fully filled or empty map
+        cluster_blanks: bool = not self.ui.clusterType_comboBox.currentIndex()
+        if cluster_blanks:
+            self.randomize_vars()
+        else:
+            for key in self.boxes:
+                self.boxes[key][COLOR_INDEX] = INIT_BLACK
+                self.vals[key[ROW_INDEX]][key[COL_INDEX]] = INIT_BLACK
 
         new_vals = copy.deepcopy(self.vals)
 
-        # Start py putting the seed in
-        initial_percent = float(float(final_goal_percent / 10) / 100.0)
-        final_percent = float(float(final_goal_percent) / 100.0)
+        # Figure out how we are starting and what we are going to
+        initial_percent = float(float(self.ui.clusterPercent_comboBox.currentIndex() + 1) / 100.0)
+        final_percent = float(initial_percent * 10.0)
+
+        # Initial seeding process
+        total = 0.0
+        cluster_total = 0.0
+        flipped = []
 
         for key in self.boxes:
+            total += 1.0
             r, c = key[0], key[1]
+            if random.random() < initial_percent:
+                new_vals[r][c] = INIT_BLACK if cluster_blanks else randint(0, self.numV-1)
+                cluster_total += 1.0
+                flipped.append(key)
+
+        current_percent = (cluster_total / total)
+        rows = int(self.ui.rows_spinBox.value())
+        cols = int(self.ui.cols_spinBox.value())
+        grid = int(self.ui.grid_slider.value())
+
+        chance_increase = 0.4
+
+        while current_percent < final_percent:
+            for key in flipped:
+                chance_of_flipping = 0.1
+                r, c = key[0], key[1]
+                surrounding = getSurrounding(r, c, rows, cols, grid)
+                del surrounding[0]
+                for sur in surrounding:
+                    if cluster_blanks == (new_vals[sur[0]][sur[1]] == INIT_BLACK):
+                        chance_of_flipping += chance_increase
+                if random.random() < chance_of_flipping:
+                    new_vals[r][c] = INIT_BLACK if cluster_blanks else randint(0, self.numV-1)
+                    cluster_total += 1.0
+                
+            chance_increase *= 0.75
+            current_percent = (cluster_total / total)
+            print(current_percent)
+
+        
+
+
+
+        
+
+        self.vals = copy.deepcopy(new_vals)
+        self.history.clear()
+        self.history.push(self.vals)
+        self.fillBoxes(new_vals=True)
+
+
 
 
 

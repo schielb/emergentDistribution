@@ -358,19 +358,16 @@
    </property>
   </widget>
   <widget class="QPushButton" name="clusterOnOff_pushButton">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="geometry">
     <rect>
-     <x>710</x>
+     <x>700</x>
      <y>130</y>
-     <width>191</width>
+     <width>181</width>
      <height>25</height>
     </rect>
    </property>
    <property name="text">
-    <string>Cluster On/Off</string>
+    <string>Enable Clustering</string>
    </property>
   </widget>
   <widget class="QFrame" name="environment_frame">
@@ -438,6 +435,9 @@
     </property>
    </widget>
    <widget class="QSlider" name="envorinment_verticalSlider">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -500,9 +500,9 @@
    <property name="geometry">
     <rect>
      <x>410</x>
-     <y>129</y>
+     <y>130</y>
      <width>52</width>
-     <height>31</height>
+     <height>25</height>
     </rect>
    </property>
    <property name="minimum">
@@ -521,7 +521,7 @@
      <x>280</x>
      <y>130</y>
      <width>141</width>
-     <height>31</height>
+     <height>25</height>
     </rect>
    </property>
    <property name="text">
@@ -1335,6 +1335,70 @@ p, li { white-space: pre-wrap; }
    <property name="text">
     <string>Analysis</string>
    </property>
+  </widget>
+  <widget class="QComboBox" name="clusterType_comboBox">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>890</x>
+     <y>130</y>
+     <width>81</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>Blank</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Filled</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QComboBox" name="clusterPercent_comboBox">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>980</x>
+     <y>130</y>
+     <width>71</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>4</number>
+   </property>
+   <item>
+    <property name="text">
+     <string>10%</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>20%</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>30%</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>40%</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>50%</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>
